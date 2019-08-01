@@ -9,13 +9,14 @@ import pickle
 from nltk import pos_tag, sent_tokenize, wordpunct_tokenize, FreqDist
 import time
 import logging
+from six import string_types
 
 log = logging.getLogger("readability.readability")
 log.setLevel('WARNING')
 
 CAT_PATTERN = r'([a-z_\s]+)/.*'
 PKL_PATTERN = r'(?!\.)[a-z_\s]+/[a-f0-9]+\.pickle'
-DOC_PATTERN = r'(?!\.)[a-z_\s]+/[a-f0-9]+\.html'
+DOC_PATTERN = r'(?!\.)[a-z_\s]+/[a-z0-9]+\.html'
 
 TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'p', 'li']
 
@@ -38,7 +39,9 @@ class HTMLCorpusReader(CategorizedCorpusReader, CorpusReader):
             kwargs['cat_pattern'] = CAT_PATTERN
         # Инициализировать объекты чтения корпуса из NLTK
         CategorizedCorpusReader.__init__(self, kwargs)   # передаются именованные аргументы
-        CorpusReader.__init__(self, root, fileids, encoding)
+        CorpusReader.__init__(self, root, fileids)
+
+
         # Сохранить теги, подлежащие извлечению.
         self.tags = tags
 
@@ -166,7 +169,7 @@ class HTMLCorpusReader(CategorizedCorpusReader, CorpusReader):
         }
 
 
-class PickledCorpusReader(CategorizedCorpusReader, CorpusReader):
+class PickledCorpusReader(HTMLCorpusReader):
 
     def __init__(self, root, fileids=PKL_PATTERN, **kwargs):
         """
@@ -245,12 +248,13 @@ class PickledCorpusReader(CategorizedCorpusReader, CorpusReader):
 if __name__ == '__main__':
     from collections import Counter
 
-    corpus = PickledCorpusReader('corpus/html/')
-    words  = Counter(corpus.words())
+    corpus = HTMLCorpusReader('corpus/raw/')
+    #corpus = PickledCorpusReader('corpus/html/')
+    #words  = Counter(corpus.words())
 
-    print("{:,} vocabulary {:,} word count".format(len(words.keys()), sum(words.values())))
+    #print("{:,} vocabulary {:,} word count".format(len(words.keys()), sum(words.values())))
 
 #corpus = HTMLCorpusReader('corpus/html', DOC_PATTERN, cat_pattern=CAT_PATTERN)
 print(corpus.categories())
-#print(corpus.fileids())
-#print(corpus.sizes())
+print(corpus.fileids())
+#print(next(corpus.sizes()))
