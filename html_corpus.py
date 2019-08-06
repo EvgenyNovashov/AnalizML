@@ -255,6 +255,18 @@ if __name__ == '__main__':
     #print("{:,} vocabulary {:,} word count".format(len(words.keys()), sum(words.values())))
 
 #corpus = HTMLCorpusReader('corpus/html', DOC_PATTERN, cat_pattern=CAT_PATTERN)
-print(corpus.categories())
-print(corpus.fileids())
+#print(corpus.categories())
+#print(corpus.fileids())
+#print(corpus.resolve(categories='cinema', fileids=None))
+#print(next(corpus.docs(fileids='cinema/index.html')))
+#print(next(corpus.html(fileids='cinema/index.html')))
+paragraf = corpus.paras(fileids='cinema/index.html')
+
+print(next(paragraf))
+
+
+#print(next(corpus.sizes()))
+
+
+
 #print(next(corpus.sizes()))
