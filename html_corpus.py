@@ -15,7 +15,7 @@ log = logging.getLogger("readability.readability")
 log.setLevel('WARNING')
 
 CAT_PATTERN = r'([a-z_\s]+)/.*'
-PKL_PATTERN = r'(?!\.)[a-z_\s]+/[a-f0-9]+\.pickle'
+PKL_PATTERN = r'(?!\.)[a-z_\s]+/[a-z0-9]+\.pickle'
 DOC_PATTERN = r'(?!\.)[a-z_\s]+/[a-z0-9]+\.html'
 
 TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'p', 'li']
@@ -99,9 +99,9 @@ class HTMLCorpusReader(CategorizedCorpusReader, CorpusReader):
         """
         for html in self.html(fileids, categories):
             soup = bs4.BeautifulSoup(html, 'lxml')
-        for element in soup.find_all(TAGS):
-            yield element.text
-        soup.decompose()
+            for element in soup.find_all(TAGS):
+                yield element.text
+            soup.decompose()
 
     def sents(self, fileids=None, categories=None):
         """
@@ -129,7 +129,7 @@ class HTMLCorpusReader(CategorizedCorpusReader, CorpusReader):
         """
         for paragraph in self.paras(fileids=fileids):
             yield [
-                pos_tag(wordpunct_tokenize(sent))
+                pos_tag(wordpunct_tokenize(sent), lang='rus')
                 for sent in sent_tokenize(paragraph)
             ]
 
@@ -146,9 +146,9 @@ class HTMLCorpusReader(CategorizedCorpusReader, CorpusReader):
         # Выполнить обход абзацев, выделить лексемы и подсчитать их
         for para in self.paras(fileids, categories):
             counts['paras'] += 1
-            for sent in para:
+            for sent in sent_tokenize(para):
                 counts['sents'] += 1
-                for word, tag in sent:
+                for word in wordpunct_tokenize(sent):
                     counts['words'] += 1
                     tokens[word] += 1
         # Определить число файлов и категорий в корпусе
@@ -244,29 +244,39 @@ class PickledCorpusReader(HTMLCorpusReader):
             yield token[0]
 
 
-
 if __name__ == '__main__':
     from collections import Counter
-
     corpus = HTMLCorpusReader('corpus/raw/')
+    #print(corpus.categories())
+
+    #for doc in corpus.docs():
+    #    print(doc)
+
+    #for html in corpus.html():
+    #    print(html)
+
+    #for cat in corpus.categories():
+    #    print(cat)
+    #    for sent in corpus.paras(categories=cat):
+    #        print(sent)
+
+    #for tag in corpus.tokenize():
+    #    print(tag)
+
+    print(corpus.describe())
+
+
+
     #corpus = PickledCorpusReader('corpus/html/')
     #words  = Counter(corpus.words())
 
     #print("{:,} vocabulary {:,} word count".format(len(words.keys()), sum(words.values())))
 
-#corpus = HTMLCorpusReader('corpus/html', DOC_PATTERN, cat_pattern=CAT_PATTERN)
-#print(corpus.categories())
-#print(corpus.fileids())
-#print(corpus.resolve(categories='cinema', fileids=None))
-#print(next(corpus.docs(fileids='cinema/index.html')))
-#print(next(corpus.html(fileids='cinema/index.html')))
-paragraf = corpus.paras(fileids='cinema/index.html')
-
-print(next(paragraf))
-
-
-#print(next(corpus.sizes()))
-
-
-
-#print(next(corpus.sizes()))
+    #corpus = HTMLCorpusReader('corpus/html', DOC_PATTERN, cat_pattern=CAT_PATTERN)
+    #print(corpus.categories())
+    #print(corpus.fileids())
+    #print(corpus.resolve(categories='cinema', fileids=None))
+    #print(next(corpus.docs(fileids='cinema/index.html')))
+    #print(next(corpus.html(fileids='cinema/index.html')))
+    #print(next(corpus.sizes()))
+    #print(next(corpus.sizes()))
