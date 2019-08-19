@@ -260,10 +260,16 @@ if __name__ == '__main__':
     #    for sent in corpus.paras(categories=cat):
     #        print(sent)
 
+    for sent in corpus.sents():
+        print(sent)
+
     #for tag in corpus.tokenize():
     #    print(tag)
 
-    print(corpus.describe())
+    #print(corpus.describe())
+    #print(next(corpus.sents()))
+    #print(next(corpus.sents()))
+    #print(next(corpus.sents()))
 
 
 

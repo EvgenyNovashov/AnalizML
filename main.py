@@ -1,4 +1,5 @@
 from html_corpus import HTMLCorpusReader,PickledCorpusReader
+from sql_corpus import OracleCorpusReader
 from preprocess import Preprocessor
 
 #Создание нового кортежа
@@ -6,10 +7,16 @@ from preprocess import Preprocessor
 #newcorpus = Preprocessor(corpus,'corpus\\tagcorpus')
 #newcorpus.transform()
 
-tagcorpus = PickledCorpusReader('corpus/tagcorpus/')
-print(tagcorpus.categories())
-for doc in tagcorpus.docs():
-    print(doc)
+#Создание нового корпуса
+corpus = OracleCorpusReader('otl_sd/otl@task')
+newcorpus = Preprocessor(corpus,'corpus\\tagcorpusoracle')
+newcorpus.transform()
 
-for tag in tagcorpus.tagged():
-    print(tag)
+
+#tagcorpus = PickledCorpusReader('corpus/tagcorpus/')
+#print(tagcorpus.categories())
+#for doc in tagcorpus.docs():
+#    print(doc)
+
+#for tag in tagcorpus.tagged():
+#    print(tag)

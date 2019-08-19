@@ -43,11 +43,11 @@ class Preprocessor(object):
         )
 
         # Compute the name parts to reconstruct
-        basename  = os.path.basename(fileid)
+        basename = os.path.basename(fileid)
         name, ext = os.path.splitext(basename)
 
         # Create the pickle file extension
-        basename  = name + '.pickle'
+        basename = name + '.pickle'
 
         # Return the path to the file relative to the target.
         return os.path.normpath(os.path.join(self.target, parent, basename))
