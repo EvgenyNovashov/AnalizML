@@ -8,15 +8,25 @@ from preprocess import Preprocessor
 #newcorpus.transform()
 
 #Создание нового корпуса
-corpus = OracleCorpusReader('otl_sd/otl@task')
-newcorpus = Preprocessor(corpus,'corpus\\tagcorpusoracle')
-newcorpus.transform()
+#corpus = OracleCorpusReader('otl_sd/otl@task')
+#newcorpus = Preprocessor(corpus,'corpus\\tagcorpusoracle')
+#newcorpus.transform()
 
 
-#tagcorpus = PickledCorpusReader('corpus/tagcorpus/')
+tagcorpus = PickledCorpusReader('corpus/tagcorpusoracle/')
 #print(tagcorpus.categories())
+
+#for size in tagcorpus.sizes():
+#    print(size)
+
 #for doc in tagcorpus.docs():
 #    print(doc)
 
-#for tag in tagcorpus.tagged():
-#    print(tag)
+#for para in tagcorpus.paras():
+#    print(para)
+
+#for sent in tagcorpus.sents():
+#    print(sent)
+
+for tag in tagcorpus.tagged(categories='281550031684823'):
+    print(tag)

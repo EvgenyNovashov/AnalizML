@@ -6,6 +6,7 @@ bs4==0.0.1
 certifi==2019.6.16
 chardet==3.0.4
 cssselect==1.0.3
+cx-Oracle==7.2.2
 docutils==0.14
 gensim==3.8.0
 idna==2.8

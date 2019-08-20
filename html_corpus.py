@@ -14,8 +14,8 @@ from six import string_types
 log = logging.getLogger("readability.readability")
 log.setLevel('WARNING')
 
-CAT_PATTERN = r'([a-z_\s]+)/.*'
-PKL_PATTERN = r'(?!\.)[a-z_\s]+/[a-z0-9]+\.pickle'
+CAT_PATTERN = r'([a-z0-9_\s]+)/.*'
+PKL_PATTERN = r'(?!\.)[a-z0-9_\s]+/[a-z0-9]+\.pickle'
 DOC_PATTERN = r'(?!\.)[a-z_\s]+/[a-z0-9]+\.html'
 
 TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'p', 'li']
@@ -247,6 +247,11 @@ class PickledCorpusReader(HTMLCorpusReader):
 if __name__ == '__main__':
     from collections import Counter
     corpus = HTMLCorpusReader('corpus/raw/')
+    #print(corpus.resolve())
+    print(corpus.fileids())
+    #print(corpus.resolve(fileids='books/book1.html', categories=None))
+    #print(corpus.resolve(fileids=None, categories='sport'))
+    #print(corpus.abspath('sport/sport2.html'))
     #print(corpus.categories())
 
     #for doc in corpus.docs():
@@ -260,8 +265,8 @@ if __name__ == '__main__':
     #    for sent in corpus.paras(categories=cat):
     #        print(sent)
 
-    for sent in corpus.sents():
-        print(sent)
+    #for sent in corpus.sents():
+    #    print(sent)
 
     #for tag in corpus.tokenize():
     #    print(tag)

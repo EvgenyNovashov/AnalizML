@@ -35,14 +35,26 @@ class OracleCorpusReader(object):
     def __init__(self, path):
         self._cur = cx_Oracle.connect(path).cursor()
 
-    def resolve(self, fileids, categories):
+    def fileids(self, categories=None):
+        if categories is not None:
+            self._cur.execute("select s.ass_wog||'/'||s.ser_id from servicecalls_ml s where s.sei_information is not null and  s.reg_created>sysdate-2 and s.ass_wog = '%s'" % categories)
+        else:
+            self._cur.execute(
+                "select s.ass_wog||'/'||s.ser_id from servicecalls_ml s where s.sei_information is not null and s.reg_created>sysdate-2")
+
+        for text in iter(self._cur.fetchall, None):
+            return text
+
+
+
+    def resolve_old(self, fileids, categories):
         """
         Возвращает идентификаторы обзоров, позволяющие извлекать
         другие метаданные обзоров
         """
         if categories is not None:
             self._cur.execute(
-                "select s.ser_id from servicecalls_ml s, itsm_workgroups g where s.ass_wog=g.wog_oid and g.WOG_NAME = '%s'" % categories)
+                "select s.ser_id from servicecalls_ml s where s.sei_information is not null and s.reg_created>sysdate-2 and s.ass_wog = '%s'" % categories)
         elif fileids is not None:
             self._cur.execute(
                 "select s.ser_id from servicecalls_ml s s.ser_id = '%s'" % fileids)
@@ -53,7 +65,19 @@ class OracleCorpusReader(object):
         for idx in iter(self._cur.fetchone, None):
             yield idx
 
-    def texts(self, fileids=None, categories=None):
+    def resolve(self, fileids, categories):
+        """
+        Возвращает идентификаторы обзоров, позволяющие извлекать
+        другие метаданные обзоров
+        """
+        if categories is not None:
+            self._cur.execute("select s.ass_wog||'/'||s.ser_id from servicecalls_ml s where s.reg_created>sysdate-2 and s.ass_wog = '%s'" % categories)
+            for idx in iter(self._cur.fetchone, None):
+                yield idx
+        else:
+            yield fileids
+
+    def paras(self, fileids=None, categories=None):
 
          """
          Возвращает полный текст всех обзоров с целью предварительной
@@ -62,13 +86,13 @@ class OracleCorpusReader(object):
 
          if categories is not None:
              self._cur.execute(
-                 "select sei_information from servicecalls_ml s, itsm_workgroups g where s.ass_wog=g.wog_oid and s.reg_created>sysdate-5 and g.WOG_NAME = '%s'" % categories)
+                 "select sei_information from servicecalls_ml s, itsm_workgroups g where s.ass_wog=g.wog_oid and s.reg_created>sysdate-2 and g.WOG_NAME = '%s'" % categories)
          elif fileids is not None:
              self._cur.execute(
-                 "select sei_information from servicecalls_ml s where s.reg_created>sysdate-5 and  s.ser_id = '%s'" % fileids)
+                 "select sei_information from servicecalls_ml s where s.reg_created>sysdate-2 and  s.ser_id = '%s'" % fileids[0].split('/')[1])
          else:
              self._cur.execute(
-                 "select sei_information from servicecalls_ml s where s.reg_created>sysdate-5")
+                 "select sei_information from servicecalls_ml s where s.reg_created>sysdate-2")
 
          for text in iter(self._cur.fetchone, None):
             yield text
@@ -88,7 +112,7 @@ class OracleCorpusReader(object):
         абзацев. Обратите внимание, что для парсинга разметки HTML
         этот метод использует BeautifulSoup.
         """
-        for paragraph in self.texts(fileids, categories):
+        for paragraph in self.paras(fileids, categories):
               for sentence in sent_tokenize(paragraph[0]):  #т.к. paragraph tuple, а sent_tokenize на вход принимаеи str
                   yield sentence
 
@@ -106,7 +130,7 @@ class OracleCorpusReader(object):
         """
         Сегментирует, лексемизирует и маркирует документ в корпусе.
         """
-        for paragraph in self.texts(fileids, categories):
+        for paragraph in self.paras(fileids, categories):
             yield [
                 pos_tag(wordpunct_tokenize(sent), lang='rus')
                 for sent in sent_tokenize(paragraph[0])
@@ -114,6 +138,12 @@ class OracleCorpusReader(object):
 
 if __name__ == '__main__':
     corpus = OracleCorpusReader('otl_sd/otl@task')
+
+    for fileid in corpus.fileids():
+        print(fileid)
+
+    #print(next(corpus.resolve(fileids='281478275531638/5248831', categories=None)))
+    #print(next(corpus.resolve(fileids=None, categories='281478275531638')))
     #print(next(corpus.texts()))
 
     #for sent in corpus.tokenize():
@@ -125,5 +155,5 @@ if __name__ == '__main__':
     #for word in corpus.words(categories='Администрирование ИТ-Сервисов/Administration SD'):
     #    print(word)
 
-    for tag in corpus.tokenize(categories='Администрирование ИТ-Сервисов/Administration SD'):
-       print(tag)
+    #for tag in corpus.tokenize(categories='Администрирование ИТ-Сервисов/Administration SD'):
+    #   print(tag)

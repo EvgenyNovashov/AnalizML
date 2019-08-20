@@ -29,11 +29,12 @@ class Preprocessor(object):
         Helper function access the fileids of the corpus
         """
         fileids = self.corpus.resolve(fileids, categories)
+
         if fileids:
-            return fileids
+            return self.corpus.fileids()
         return self.corpus.fileids()
 
-    def abspath(self, fileid):
+    def abspath2(self, fileid):
         """
         Returns the absolute path to the target fileid from the corpus fileid.
         """
@@ -52,6 +53,15 @@ class Preprocessor(object):
         # Return the path to the file relative to the target.
         return os.path.normpath(os.path.join(self.target, parent, basename))
 
+    def abspath(self, fileid):
+
+        parent, name = os.path.split(fileid[0])
+        # Create the pickle file extension
+        basename = name + '.pickle'
+
+        # Return the path to the file relative to the target.
+        return os.path.normpath(os.path.join(self.target, parent, basename))
+
     def tokenize(self, fileid):
         """
         Segments, tokenizes, and tags a document in the corpus. Returns a
@@ -59,10 +69,11 @@ class Preprocessor(object):
         are lists of part of speech tagged words.
         """
         for paragraph in self.corpus.paras(fileids=fileid):
-            yield [
-                pos_tag(wordpunct_tokenize(sent))
-                for sent in sent_tokenize(paragraph)
-            ]
+            if paragraph:
+                yield [
+                    pos_tag(wordpunct_tokenize(sent), lang='rus')
+                    for sent in sent_tokenize(paragraph[0])
+                ]
 
     def process(self, fileid):
         """
