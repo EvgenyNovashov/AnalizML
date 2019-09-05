@@ -1,4 +1,5 @@
 from html_corpus import HTMLCorpusReader,PickledCorpusReader
+import os
 from sql_corpus import OracleCorpusReader
 from preprocess import Preprocessor
 
@@ -8,7 +9,7 @@ from preprocess import Preprocessor
 #newcorpus.transform()
 
 #Создание нового корпуса
-#corpus = OracleCorpusReader('otl_sd/otl@task')
+#corpus = OracleCorpusReader(os.environ.get('CONNECTION_DB'))
 #newcorpus = Preprocessor(corpus,'corpus\\tagcorpusoracle')
 #newcorpus.transform()
 
@@ -22,11 +23,14 @@ tagcorpus = PickledCorpusReader('corpus/tagcorpusoracle/')
 #for doc in tagcorpus.docs():
 #    print(doc)
 
-#for para in tagcorpus.paras():
-#    print(para)
+for para in tagcorpus.resolve(fileids=None,categories='281550031684823'):
+    print(para)
+
+for para in tagcorpus.fileids(categories='281550031684823'):
+    print(para)
 
 #for sent in tagcorpus.sents():
-#    print(sent)
+#   print(sent)
 
-for tag in tagcorpus.tagged(categories='281550031684823'):
-    print(tag)
+#for tag in tagcorpus.tagged(categories='281550031684823'):
+#    print(tag)

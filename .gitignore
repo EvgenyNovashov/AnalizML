@@ -107,3 +107,9 @@ venv.bak/
 /corpus
 
 test.py
+test2.py
+test.txt
+*.pkl
+*.model
+*.json
+

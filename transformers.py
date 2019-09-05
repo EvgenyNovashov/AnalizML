@@ -2,6 +2,7 @@ import os
 import nltk
 import gensim
 import unicodedata
+from collections import Counter
 
 from loader import CorpusLoader
 from nltk.corpus import wordnet as wn
@@ -50,6 +51,46 @@ class TextNormalizer(BaseEstimator, TransformerMixin):
             yield self.normalize(document[0])
 
 
+class TextNormalizerRus(BaseEstimator, TransformerMixin):
+
+    def __init__(self, language='russian'):
+        self.stopwords  = set(nltk.corpus.stopwords.words(language))
+        self.lemmatizer = WordNetLemmatizer()
+
+    def is_punct(self, token):
+        return all(
+            unicodedata.category(char).startswith('P') for char in token
+        )
+
+    def is_stopword(self, token):
+        return token.lower() in self.stopwords
+
+    def normalize(self, document):
+        return [
+            self.lemmatize(token, tag).lower()
+            for paragraph in document
+            for sentence in paragraph
+            for (token, tag) in sentence
+            if not self.is_punct(token) and not self.is_stopword(token) and tag != 'NUM=ciph'
+        ]
+
+    def lemmatize(self, token, pos_tag):
+        from spacy.lang.ru import Russian
+        nlp = Russian()
+        docs = iter(nlp(token))
+        return next(docs).lemma_
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, documents):
+        i = 0
+        for document in documents:
+            i += 1
+            print('Обработано заявок: {0} '.format(i))
+            yield self.normalize(document[0])
+
+
 class GensimVectorizer(BaseEstimator, TransformerMixin):
 
     def __init__(self, path=None):
@@ -78,18 +119,33 @@ if __name__ == '__main__':
     from loader import CorpusLoader
     from reader import PickledCorpusReader
 
-    corpus = PickledCorpusReader('../corpus')
+    corpus = PickledCorpusReader('corpus/tagcorpusoracle')
     loader = CorpusLoader(corpus, 12)
 
-    docs   = loader.documents(0, test=True)
-    labels = loader.labels(0, test=True)
-    # print(next(docs)[0][0][0])
-    normal = TextNormalizer()
-    normal.fit(docs, labels)
+    docs = loader.documents(0, train=True)
+    labels = loader.labels(0, train=True)
+    #print(next(docs)[0][0][0])
+    #normal = TextNormalizerRus()
+    #normal.fit(docs, labels)
+    #docs = list(normal.transform(docs))
+    docs2 = []
+    for word in corpus.sents():
+        docs2.append([tok[0] for tok in word])
 
-    docs   = list(normal.transform(docs))
+
 
     vect = GensimVectorizer('lexicon.pkl')
-    vect.fit(docs)
-    docs = vect.transform(docs)
-    print(next(docs))
+    vect.fit(docs2)
+    docs = vect.transform(docs2)
+    print(next(docs).size)
+
+    from sklearn.pipeline import Pipeline
+    from sklearn.naive_bayes import MultinomialNB
+
+    model = Pipeline([
+        ('normalizer', TextNormalizer()),
+        ('vectorizer', GensimVectorizer()),
+        ('bayes', MultinomialNB()),
+    ])
+
+
