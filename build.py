@@ -1,5 +1,8 @@
 import nltk
 import unicodedata
+from datetime import datetime
+import pickle
+import os
 import numpy as np
 
 from loader import CorpusLoader
@@ -13,6 +16,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import SGDClassifier
 from sklearn.decomposition import TruncatedSVD
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
 
@@ -61,10 +65,50 @@ class TextNormalizer(BaseEstimator, TransformerMixin):
             yield self.normalize(document[0])
 
 
+class Text(BaseEstimator, TransformerMixin):
+
+    def __init__(self, language='russian'):
+        self.stopwords  = set(nltk.corpus.stopwords.words(language))
+        self.lemmatizer = WordNetLemmatizer()
+
+    def is_punct(self, token):
+        return all(
+            unicodedata.category(char).startswith('P') for char in token
+        )
+
+    def is_stopword(self, token):
+        return token.lower() in self.stopwords
+
+    def normalize(self, document):
+        return [
+            #self.lemmatize(token, tag).lower()
+            token
+            for paragraph in document
+            for sentence in paragraph
+            for (token, tag) in sentence
+            if not self.is_punct(token) and not self.is_stopword(token) and tag != 'NUM=ciph'
+        ]
+
+    def lemmatize(self, token, pos_tag):
+        nlp = Russian()
+        docs = iter(nlp(token))
+        return next(docs).lemma_
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, documents):
+        i = 0
+        for document in documents:
+            i += 1
+            print('Обработано заявок: {0} '.format(i))
+            yield self.normalize(document[0])
+
+
 def create_pipeline(estimator, reduction=False):
 
     steps = [
-        ('normalize', TextNormalizer()),
+        ('normalize', Text()),
         ('vectorize', TfidfVectorizer(
             tokenizer=identity, preprocessor=None, lowercase=False
         ))
@@ -85,7 +129,7 @@ reader = PickledCorpusReader('corpus/tagcorpusoracle_test')
 loader = CorpusLoader(reader, 5, shuffle=True, categories=labels)
 
 models = []
-for form in (LogisticRegression, SGDClassifier):
+for form in (LogisticRegression, SGDClassifier, DecisionTreeClassifier):
     models.append(create_pipeline(form(), True))
     models.append(create_pipeline(form(), False))
 
@@ -96,6 +140,14 @@ import time
 import json
 
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+def preprocess(text):
+    return [
+        [
+            list(nltk.pos_tag(nltk.word_tokenize(sent), lang='rus'))
+            for sent in nltk.sent_tokenize(para)
+        ] for para in text.split("\n\n")
+    ]
 
 def score_models(models, loader):
     for model in models:
@@ -125,9 +177,21 @@ def score_models(models, loader):
             scores['recall'].append(recall_score(y_test, y_pred, average='weighted'))
             scores['f1'].append(f1_score(y_test, y_pred, average='weighted'))
 
+        timem = datetime.now().strftime("%Y-%m-%d")
+        path = '{}-classifier-{}'.format(name, timem)
+        with open(os.path.join(os.path.basename('models'), path), 'wb') as f:
+            pickle.dump(model, f)
+
         yield scores
 
 if __name__ == '__main__':
-    for scores in score_models(models, loader):
-        with open('results.json', 'a') as f:
-            f.write(json.dumps(scores) + "\n")
+#    for scores in score_models(models, loader):
+#        with open('results.json', 'a') as f:
+#            f.write(json.dumps(scores) + "\n")
+
+    path = os.path.join(os.path.basename('models'), 'SGDClassifier-classifier-2019-09-05')
+    with open(path, 'rb') as f:
+        model = pickle.load(f)
+
+    newdocs = ['Добрый день, не работает СУЗ']
+    print(model.predict([[preprocess(doc) for doc in newdocs]]))
